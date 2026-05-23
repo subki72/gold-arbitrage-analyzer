@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Gold Arbitrage Analyzer — Analisa perbandingan harga emas (PAXG & XAUT) dari berbagai CEX untuk mencari peluang arbitrase terbaik.">
+  <meta name="keywords" content="gold, emas, arbitrase, PAXG, XAUT, crypto, trading, CEX, harga emas">
+  <meta name="author" content="Gold Arbitrage Analyzer">
+  
+  <!-- Open Graph -->
+  <meta property="og:title" content="Gold Arbitrage Analyzer">
+  <meta property="og:description" content="Analisa perbandingan harga emas dari berbagai CEX untuk peluang arbitrase.">
+  <meta property="og:type" content="website">
+  
+  <title>Gold Arbitrage Analyzer — Analisa Harga Emas CEX</title>
+  
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="./index.css">
+  
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+
+  <!-- ═══ Loading Overlay ═══ -->
+  <div id="loading-overlay" class="loading-overlay">
+    <div class="loading-spinner"></div>
+    <p class="loading-text">Memuat Gold Arbitrage Analyzer...</p>
+  </div>
+
+  <!-- ═══ Loading Indicator (top bar) ═══ -->
+  <div id="loading-indicator" class="loading-indicator"></div>
+
+  <!-- ═══════════════════════════════════════
+       HEADER
+       ═══════════════════════════════════════ -->
+  <header class="header">
+    <div class="container">
+      <div class="header-inner">
+        
+        <!-- Left: Logo -->
+        <div class="header-left">
+          <div class="logo">
+            <div class="logo-icon"><i data-lucide="coins" class="lucide-icon"></i></div>
+            <div class="logo-text">
+              <span class="logo-title">Gold Arbitrage</span>
+              <span class="logo-subtitle">Analisa Perbandingan Harga Emas</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Center: Token Selector -->
+        <div class="header-center">
+          <div class="token-selector" id="token-selector">
+            <button class="token-btn active" data-token="PAXG" id="btn-paxg">PAXG</button>
+            <button class="token-btn" data-token="XAUT" id="btn-xaut">XAUT</button>
+          </div>
+        </div>
+        
+        <!-- Right: Controls -->
+        <div class="header-right">
+          <div class="refresh-controls">
+            <div class="toggle-wrap">
+              <span class="toggle-label">Auto</span>
+              <input type="checkbox" class="toggle" id="refresh-toggle" checked>
+            </div>
+            <select class="interval-select" id="refresh-interval">
+              <option value="15000">15 dtk</option>
+              <option value="30000" selected>30 dtk</option>
+              <option value="60000">1 mnt</option>
+              <option value="300000">5 mnt</option>
+            </select>
+            <button class="refresh-btn" id="refresh-now-btn" title="Refresh Sekarang"><i data-lucide="refresh-cw" class="lucide-icon"></i></button>
+          </div>
+          
+          <div class="status-clock">
+            <span class="status-indicator online" id="connection-status"></span>
+            <span class="live-clock" id="live-clock">--:--:--</span>
+            <div class="last-updated-wrap">
+              <span>Upd:</span>
+              <span id="last-updated">—</span>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══════════════════════════════════════
+       MAIN CONTENT
+       ═══════════════════════════════════════ -->
+  <main class="container" style="padding-top: var(--space-8); position: relative; z-index: 1;">
+
+    <!-- ═══ Stats Cards ═══ -->
+    <section class="section animate-in" id="stats-section">
+      <div class="stats-grid">
+        
+        <!-- Best Buy -->
+        <div class="stat-card card-green" id="best-buy-card">
+          <div class="card-header">
+            <span class="card-label"><i data-lucide="arrow-down-circle" class="lucide-icon card-icon-green"></i> Harga Terendah</span>
+            <span class="card-trend trend-up" id="best-buy-trend">—</span>
+          </div>
+          <div class="card-value" id="best-buy-value">$—</div>
+          <div class="card-sub">
+            <span id="best-buy-sub">Memuat...</span>
+          </div>
+        </div>
+        
+        <!-- Best Sell -->
+        <div class="stat-card card-gold" id="best-sell-card">
+          <div class="card-header">
+            <span class="card-label"><i data-lucide="arrow-up-circle" class="lucide-icon card-icon-gold"></i> Harga Tertinggi</span>
+            <span class="card-trend trend-up" id="best-sell-trend">—</span>
+          </div>
+          <div class="card-value" id="best-sell-value">$—</div>
+          <div class="card-sub">
+            <span id="best-sell-sub">Memuat...</span>
+          </div>
+        </div>
+        
+        <!-- Max Spread -->
+        <div class="stat-card card-warning" id="max-spread-card">
+          <div class="card-header">
+            <span class="card-label"><i data-lucide="bar-chart-3" class="lucide-icon card-icon-orange"></i> Spread Terbesar</span>
+            <span class="card-trend" id="max-spread-abs">—</span>
+          </div>
+          <div class="card-value" id="max-spread-value">—%</div>
+          <div class="card-sub">
+            <span id="max-spread-sub">Memuat...</span>
+          </div>
+        </div>
+        
+        <!-- Total Volume -->
+        <div class="stat-card card-blue" id="total-volume-card">
+          <div class="card-header">
+            <span class="card-label"><i data-lucide="trending-up" class="lucide-icon card-icon-blue"></i> Volume 24 Jam</span>
+          </div>
+          <div class="card-value" id="total-volume-value">$—</div>
+          <div class="card-sub">
+            <span id="total-volume-sub">Memuat...</span>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- ═══ Price Comparison Chart ═══ -->
+    <section class="section animate-in">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i data-lucide="bar-chart-horizontal" class="lucide-icon icon"></i> Perbandingan Harga Antar Exchange
+          </h2>
+        </div>
+        <div class="panel-body">
+          <div class="chart-wrap">
+            <canvas id="price-comp-chart"></canvas>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Heatmap + Price History (2-col) ═══ -->
+    <section class="section animate-in">
+      <div class="grid-1-1">
+        
+        <!-- Spread Heatmap -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <i data-lucide="grid-3x3" class="lucide-icon icon"></i> Peta Spread
+            </h2>
+          </div>
+          <div class="panel-body" style="overflow-x: auto;">
+            <div id="heatmap-container">
+              <p class="no-data">Memuat data heatmap...</p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Price History -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <i data-lucide="line-chart" class="lucide-icon icon"></i> Riwayat Harga
+            </h2>
+            <div class="tf-selector">
+              <button class="tf-btn" data-tf="1h">1J</button>
+              <button class="tf-btn" data-tf="4h">4J</button>
+              <button class="tf-btn active" data-tf="24h">24J</button>
+              <button class="tf-btn" data-tf="7d">7H</button>
+            </div>
+          </div>
+          <div class="panel-body">
+            <div class="chart-wrap">
+              <canvas id="price-history-chart"></canvas>
+            </div>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+
+    <!-- ═══ Comparison Table ═══ -->
+    <section class="section animate-in">
+      <div class="panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i data-lucide="table-2" class="lucide-icon icon"></i> Tabel Perbandingan Exchange
+          </h2>
+        </div>
+        <div class="panel-body no-pad">
+          <div class="table-container">
+            <table class="comparison-table" id="exchange-table">
+              <thead>
+                <tr>
+                  <th class="sort-header" data-sort="name">Exchange</th>
+                  <th class="sort-header" data-sort="price">Harga</th>
+                  <th class="sort-header" data-sort="change">Perubahan 24J</th>
+                  <th class="sort-header" data-sort="volume">Volume</th>
+                  <th class="sort-header" data-sort="fee">Fee (M/T)</th>
+                  <th>Spread vs Terbaik</th>
+                  <th>Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="exchange-table-body">
+                <tr>
+                  <td colspan="7" class="no-data">Memuat data exchange...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══ Calculator + Volume Chart (2-col) ═══ -->
+    <section class="section animate-in">
+      <div class="grid-1-1">
+        
+        <!-- Arbitrage Calculator -->
+        <div class="panel">
+          <div class="panel-header">
+            <h2 class="panel-title">
+              <i data-lucide="calculator" class="lucide-icon icon"></i> Kalkulator Arbitrase
+            </h2>
+          </div>
+          <div class="panel-body">
+            <div class="calc-grid">
+              
+              <!-- Buy Exchange -->
+              <div class="calc-field">
+                <label class="calc-label" for="calc-buy-exchange">Beli Dari</label>
+                <select class="calc-select" id="calc-buy-exchange">
+                  <option value="">Pilih Exchange</option>
+                </select>
+              </div>
+              
+              <!-- Sell Exchange -->
+              <div class="calc-field">
+                <label class="calc-label" for="calc-sell-exchange">Jual Ke</label>
+                <select class="calc-select" id="calc-sell-exchange">
+                  <option value="">Pilih Exchange</option>
+                </select>
+              </div>
+              
+              <!-- Amount -->
+              <div class="calc-field">
+                <label class="calc-label" for="calc-amount">Jumlah (troy ounce)</label>
+                <input type="number" class="calc-input" id="calc-amount" value="1" min="0.01" step="0.1" placeholder="1.0">
+              </div>
+              
+              <!-- Auto-pair -->
+              <div class="calc-field" style="justify-content: flex-end;">
+                <button class="auto-pair-btn" id="auto-pair-btn"><i data-lucide="zap" class="lucide-icon"></i> Isi Pasangan Terbaik Otomatis</button>
+              </div>
+              
+              <div class="calc-divider"></div>
+              
+              <!-- Results -->
+              <div class="calc-results">
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Harga Beli</span>
+                  <span class="calc-result-value" id="calc-buy-price">$—</span>
+                </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Harga Jual</span>
+                  <span class="calc-result-value" id="calc-sell-price">$—</span>
+                </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Total Beli</span>
+                  <span class="calc-result-value" id="calc-buy-cost">$—</span>
+                </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Total Jual</span>
+                  <span class="calc-result-value" id="calc-sell-revenue">$—</span>
+                </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Fee Beli</span>
+                  <span class="calc-result-value text-red" id="calc-buy-fee">$—</span>
+                </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Fee Jual</span>
+                  <span class="calc-result-value text-red" id="calc-sell-fee">$—</span>
+                </div>
+                <div class="calc-result-row" style="grid-column: 1 / -1;">
+                  <span class="calc-result-label">Profit Kotor</span>
+                  <span class="calc-result-value" id="calc-gross-profit">$—</span>
+                </div>
+                
+                <!-- Big Net Profit -->
+                <div class="calc-result-big">
+                  <span class="calc-result-label">Profit Bersih</span>
+                  <span class="calc-result-value" id="calc-net-profit">$—</span>
+                  <span class="calc-result-value" id="calc-profit-pct" style="font-size: var(--text-lg);">—%</span>
+                  <span class="profit-indicator neutral" id="profit-indicator">Pilih exchange</span>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+        
+        <!-- Volume + Spread Trend -->
+        <div style="display: flex; flex-direction: column; gap: var(--space-6);">
+          
+          <!-- Volume Chart -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <i data-lucide="pie-chart" class="lucide-icon icon"></i> Distribusi Volume
+              </h2>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap chart-sm">
+                <canvas id="volume-chart"></canvas>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Spread Trend -->
+          <div class="panel">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <i data-lucide="activity" class="lucide-icon icon"></i> Tren Spread
+              </h2>
+            </div>
+            <div class="panel-body">
+              <div class="chart-wrap chart-sm">
+                <canvas id="spread-trend-chart"></canvas>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+        
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ═══════════════════════════════════════
+       FOOTER
+       ═══════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        
+        <div class="footer-disclaimer">
+          <strong><i data-lucide="alert-triangle" class="lucide-icon" style="width:14px;height:14px;vertical-align:-2px;"></i> Disclaimer:</strong> Data yang ditampilkan bersifat informasional dan bukan merupakan saran investasi atau keuangan. 
+          Harga yang ditampilkan adalah harga indikasi dan mungkin berbeda dari harga eksekusi aktual. 
+          Selalu lakukan riset sendiri (DYOR) sebelum melakukan trading.
+        </div>
+        
+        <div class="footer-info">
+          <span>© 2026 Gold Arbitrage Analyzer</span>
+          <span class="text-muted">Data dari API publik exchange</span>
+          <div class="footer-sources">
+            <a href="https://www.binance.com" target="_blank" rel="noopener">Binance</a>
+            <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a>
+            <a href="https://www.bybit.com" target="_blank" rel="noopener">Bybit</a>
+            <a href="https://www.kucoin.com" target="_blank" rel="noopener">KuCoin</a>
+            <a href="https://www.gate.io" target="_blank" rel="noopener">Gate.io</a>
+            <a href="https://www.coingecko.com" target="_blank" rel="noopener">CoinGecko</a>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+  </footer>
+
+  <!-- ═══ Initialize Lucide Icons ═══ -->
+  <script>document.addEventListener('DOMContentLoaded', () => { if (window.lucide) lucide.createIcons(); });</script>
+
+  <!-- ═══ App Script (ES Module) ═══ -->
+  <script type="module" src="./js/app.js"></script>
+
+</body>
+</html>
