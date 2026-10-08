@@ -1,22 +1,22 @@
 // ============================================================
-// config.js — Konfigurasi aplikasi Gold Arbitrage Analyzer
+// config.js — Gold Arbitrage Analyzer configuration
 // ============================================================
 
 export const CONFIG = {
   // ── Refresh Settings ──
-  refreshInterval: 30000,       // 30 detik
+  refreshInterval: 30000,       // 30 seconds default
   refreshIntervalOptions: [
-    { label: '15 detik', value: 15000 },
-    { label: '30 detik', value: 30000 },
-    { label: '1 menit', value: 60000 },
-    { label: '5 menit', value: 300000 },
+    { label: '15s', value: 15000 },
+    { label: '30s', value: 30000 },
+    { label: '1m', value: 60000 },
+    { label: '5m', value: 300000 },
   ],
 
   // ── API Timeout ──
-  apiTimeout: 8000,             // 8 detik timeout per request
+  apiTimeout: 8000,             // 8 seconds request timeout
 
   // ── Cache TTL ──
-  cacheTTL: 25000,              // 25 detik cache
+  cacheTTL: 25000,              // 25 seconds cache TTL
 
   // ── Token Pairs ──
   tokens: {
@@ -25,14 +25,16 @@ export const CONFIG = {
       symbol: 'PAXG',
       name: 'PAX Gold',
       coingeckoId: 'pax-gold',
+      transferFeeRate: 0.0002,  // 0.02% Paxos smart contract transfer fee
       pairs: {
         binance: 'PAXGUSDT',
         okx: 'PAXG-USDT',
-        bybit: 'PAXGUSDT',
+        bybit: null,            // Not listed on Bybit spot
         kucoin: 'PAXG-USDT',
-        htx: 'paxgusdt',
+        htx: null,              // Not listed on HTX spot
         gateio: 'PAXG_USDT',
-        mexc: 'PAXGUSDT',
+        mexc: 'GOLD(PAXG)USDT', // MEXC GOLD prefix with parentheses
+        bitfinex: null,         // Not listed on Bitfinex
       }
     },
     XAUT: {
@@ -40,15 +42,16 @@ export const CONFIG = {
       symbol: 'XAUT',
       name: 'Tether Gold',
       coingeckoId: 'tether-gold',
+      transferFeeRate: 0.0,     // No contract level transfer fee
       pairs: {
-        binance: null,          // Not available on Binance
+        binance: null,          // Not listed on Binance
         okx: 'XAUT-USDT',
         bybit: 'XAUTUSDT',
         kucoin: 'XAUT-USDT',
         htx: 'xautusdt',
         gateio: 'XAUT_USDT',
-        mexc: 'XAUTUSDT',
-        bitfinex: 'tXAUTUSD',
+        mexc: 'GOLD(XAUT)USDT', // MEXC GOLD prefix with parentheses
+        bitfinex: 'tXAUT:USD',  // Bitfinex colon symbol notation
       }
     }
   },
@@ -146,10 +149,12 @@ export const CONFIG = {
   chart: {
     maxDataPoints: 100,
     timeframes: [
-      { label: '1J', value: '1h', minutes: 60 },
-      { label: '4J', value: '4h', minutes: 240 },
-      { label: '24J', value: '24h', minutes: 1440 },
-      { label: '7H', value: '7d', minutes: 10080 },
+      { label: '1H', value: '1h', minutes: 60 },
+      { label: '4H', value: '4h', minutes: 240 },
+      { label: '24H', value: '24h', minutes: 1440 },
+      { label: '7D', value: '7d', minutes: 10080 },
     ],
   }
 };
+
+export default CONFIG;

@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Gold Arbitrage Analyzer — Analisa perbandingan harga emas (PAXG & XAUT) dari berbagai CEX untuk mencari peluang arbitrase terbaik.">
-  <meta name="keywords" content="gold, emas, arbitrase, PAXG, XAUT, crypto, trading, CEX, harga emas">
+  <meta name="description" content="Gold Arbitrage Analyzer — Real-time price comparison and arbitrage opportunity analyzer for gold-backed tokens (PAXG & XAUT) across major CEXs.">
+  <meta name="keywords" content="gold, crypto, arbitrage, PAXG, XAUT, trading, CEX, gold price, crypto arbitrage">
   <meta name="author" content="Gold Arbitrage Analyzer">
   
   <!-- Open Graph -->
   <meta property="og:title" content="Gold Arbitrage Analyzer">
-  <meta property="og:description" content="Analisa perbandingan harga emas dari berbagai CEX untuk peluang arbitrase.">
+  <meta property="og:description" content="Compare gold-backed token prices across centralized exchanges and find the best arbitrage opportunities in real time.">
   <meta property="og:type" content="website">
   
-  <title>Gold Arbitrage Analyzer — Analisa Harga Emas CEX</title>
+  <title>Gold Arbitrage Analyzer — Real-Time CEX Gold Arbitrage</title>
   
   <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
@@ -20,19 +20,25 @@
   <!-- Stylesheet -->
   <link rel="stylesheet" href="./index.css">
   
-  <!-- Lucide Icons CDN -->
-  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+  <!-- Lucide Icons CDN (Pinned Version with SRI) -->
+  <script src="https://unpkg.com/lucide@0.469.0/dist/umd/lucide.min.js"
+          integrity="sha384-hJnF5AwidE18GSWTAGHv3ByzzvfNZ1Tcx5y1UUV3WkauuMCEzBJBMSwSt/PUPXnM"
+          crossorigin="anonymous"></script>
 
-  <!-- Chart.js CDN -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <!-- Chart.js CDN (Pinned Version with SRI) -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"
+          integrity="sha384-vsrfeLOOY6KuIYKDlmVH5UiBmgIdB1oEf7p01YgWHuqmOHfZr374+odEv96n9tNC"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"
+          integrity="sha384-cVMg8E3QFwTvGCDuK+ET4PD341jF3W8nO1auiXfuZNQkzbUUiBGLsIQUE+b1mxws"
+          crossorigin="anonymous"></script>
 </head>
 <body>
 
   <!-- ═══ Loading Overlay ═══ -->
   <div id="loading-overlay" class="loading-overlay">
     <div class="loading-spinner"></div>
-    <p class="loading-text">Memuat Gold Arbitrage Analyzer...</p>
+    <p class="loading-text">Loading Gold Arbitrage Analyzer...</p>
   </div>
 
   <!-- ═══ Loading Indicator (top bar) ═══ -->
@@ -51,7 +57,7 @@
             <div class="logo-icon"><i data-lucide="coins" class="lucide-icon"></i></div>
             <div class="logo-text">
               <span class="logo-title">Gold Arbitrage</span>
-              <span class="logo-subtitle">Analisa Perbandingan Harga Emas</span>
+              <span class="logo-subtitle">Gold Token Price Comparison & Arbitrage</span>
             </div>
           </div>
         </div>
@@ -72,19 +78,19 @@
               <input type="checkbox" class="toggle" id="refresh-toggle" checked>
             </div>
             <select class="interval-select" id="refresh-interval">
-              <option value="15000">15 dtk</option>
-              <option value="30000" selected>30 dtk</option>
-              <option value="60000">1 mnt</option>
-              <option value="300000">5 mnt</option>
+              <option value="15000">15s</option>
+              <option value="30000" selected>30s</option>
+              <option value="60000">1m</option>
+              <option value="300000">5m</option>
             </select>
-            <button class="refresh-btn" id="refresh-now-btn" title="Refresh Sekarang"><i data-lucide="refresh-cw" class="lucide-icon"></i></button>
+            <button class="refresh-btn" id="refresh-now-btn" title="Refresh Now"><i data-lucide="refresh-cw" class="lucide-icon"></i></button>
           </div>
           
           <div class="status-clock">
             <span class="status-indicator online" id="connection-status"></span>
             <span class="live-clock" id="live-clock">--:--:--</span>
             <div class="last-updated-wrap">
-              <span>Upd:</span>
+              <span class="text-muted">Updated:</span>
               <span id="last-updated">—</span>
             </div>
           </div>
@@ -99,6 +105,14 @@
        ═══════════════════════════════════════ -->
   <main class="container" style="padding-top: var(--space-8); position: relative; z-index: 1;">
 
+    <!-- ═══ Global Alert Banner ═══ -->
+    <div id="global-alert-banner" class="global-alert" style="display: none;">
+      <div class="global-alert-content">
+        <i data-lucide="alert-triangle" class="lucide-icon alert-icon"></i>
+        <span id="global-alert-message">Insufficient live market data: fewer than 2 exchanges responded with live quotes. Arbitrage opportunities require at least 2 active markets.</span>
+      </div>
+    </div>
+
     <!-- ═══ Stats Cards ═══ -->
     <section class="section animate-in" id="stats-section">
       <div class="stats-grid">
@@ -106,47 +120,47 @@
         <!-- Best Buy -->
         <div class="stat-card card-green" id="best-buy-card">
           <div class="card-header">
-            <span class="card-label"><i data-lucide="arrow-down-circle" class="lucide-icon card-icon-green"></i> Harga Terendah</span>
+            <span class="card-label"><i data-lucide="arrow-down-circle" class="lucide-icon card-icon-green"></i> Lowest Price (Best Buy)</span>
             <span class="card-trend trend-up" id="best-buy-trend">—</span>
           </div>
           <div class="card-value" id="best-buy-value">$—</div>
           <div class="card-sub">
-            <span id="best-buy-sub">Memuat...</span>
+            <span id="best-buy-sub">Loading...</span>
           </div>
         </div>
         
         <!-- Best Sell -->
         <div class="stat-card card-gold" id="best-sell-card">
           <div class="card-header">
-            <span class="card-label"><i data-lucide="arrow-up-circle" class="lucide-icon card-icon-gold"></i> Harga Tertinggi</span>
+            <span class="card-label"><i data-lucide="arrow-up-circle" class="lucide-icon card-icon-gold"></i> Highest Price (Best Sell)</span>
             <span class="card-trend trend-up" id="best-sell-trend">—</span>
           </div>
           <div class="card-value" id="best-sell-value">$—</div>
           <div class="card-sub">
-            <span id="best-sell-sub">Memuat...</span>
+            <span id="best-sell-sub">Loading...</span>
           </div>
         </div>
         
         <!-- Max Spread -->
         <div class="stat-card card-warning" id="max-spread-card">
           <div class="card-header">
-            <span class="card-label"><i data-lucide="bar-chart-3" class="lucide-icon card-icon-orange"></i> Spread Terbesar</span>
+            <span class="card-label"><i data-lucide="bar-chart-3" class="lucide-icon card-icon-orange"></i> Max Spread</span>
             <span class="card-trend" id="max-spread-abs">—</span>
           </div>
           <div class="card-value" id="max-spread-value">—%</div>
           <div class="card-sub">
-            <span id="max-spread-sub">Memuat...</span>
+            <span id="max-spread-sub">Loading...</span>
           </div>
         </div>
         
         <!-- Total Volume -->
         <div class="stat-card card-blue" id="total-volume-card">
           <div class="card-header">
-            <span class="card-label"><i data-lucide="trending-up" class="lucide-icon card-icon-blue"></i> Volume 24 Jam</span>
+            <span class="card-label"><i data-lucide="trending-up" class="lucide-icon card-icon-blue"></i> 24h Volume</span>
           </div>
           <div class="card-value" id="total-volume-value">$—</div>
           <div class="card-sub">
-            <span id="total-volume-sub">Memuat...</span>
+            <span id="total-volume-sub">Loading...</span>
           </div>
         </div>
         
@@ -158,7 +172,7 @@
       <div class="panel">
         <div class="panel-header">
           <h2 class="panel-title">
-            <i data-lucide="bar-chart-horizontal" class="lucide-icon icon"></i> Perbandingan Harga Antar Exchange
+            <i data-lucide="bar-chart-horizontal" class="lucide-icon icon"></i> Price Comparison Across Exchanges
           </h2>
         </div>
         <div class="panel-body">
@@ -177,12 +191,12 @@
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <i data-lucide="grid-3x3" class="lucide-icon icon"></i> Peta Spread
+              <i data-lucide="grid-3x3" class="lucide-icon icon"></i> Spread Heatmap Matrix
             </h2>
           </div>
           <div class="panel-body" style="overflow-x: auto;">
             <div id="heatmap-container">
-              <p class="no-data">Memuat data heatmap...</p>
+              <p class="no-data">Loading heatmap data...</p>
             </div>
           </div>
         </div>
@@ -191,13 +205,13 @@
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <i data-lucide="line-chart" class="lucide-icon icon"></i> Riwayat Harga
+              <i data-lucide="line-chart" class="lucide-icon icon"></i> Price History
             </h2>
             <div class="tf-selector">
-              <button class="tf-btn" data-tf="1h">1J</button>
-              <button class="tf-btn" data-tf="4h">4J</button>
-              <button class="tf-btn active" data-tf="24h">24J</button>
-              <button class="tf-btn" data-tf="7d">7H</button>
+              <button class="tf-btn" data-tf="1h">1H</button>
+              <button class="tf-btn" data-tf="4h">4H</button>
+              <button class="tf-btn active" data-tf="24h">24H</button>
+              <button class="tf-btn" data-tf="7d">7D</button>
             </div>
           </div>
           <div class="panel-body">
@@ -215,7 +229,7 @@
       <div class="panel">
         <div class="panel-header">
           <h2 class="panel-title">
-            <i data-lucide="table-2" class="lucide-icon icon"></i> Tabel Perbandingan Exchange
+            <i data-lucide="table-2" class="lucide-icon icon"></i> Exchange Comparison Table
           </h2>
         </div>
         <div class="panel-body no-pad">
@@ -224,17 +238,17 @@
               <thead>
                 <tr>
                   <th class="sort-header" data-sort="name">Exchange</th>
-                  <th class="sort-header" data-sort="price">Harga</th>
-                  <th class="sort-header" data-sort="change">Perubahan 24J</th>
+                  <th class="sort-header" data-sort="price">Price</th>
+                  <th class="sort-header" data-sort="change">24h Change</th>
                   <th class="sort-header" data-sort="volume">Volume</th>
                   <th class="sort-header" data-sort="fee">Fee (M/T)</th>
-                  <th>Spread vs Terbaik</th>
-                  <th>Aksi</th>
+                  <th>Spread vs Best</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody id="exchange-table-body">
                 <tr>
-                  <td colspan="7" class="no-data">Memuat data exchange...</td>
+                  <td colspan="7" class="no-data">Loading exchange data...</td>
                 </tr>
               </tbody>
             </table>
@@ -251,7 +265,7 @@
         <div class="panel">
           <div class="panel-header">
             <h2 class="panel-title">
-              <i data-lucide="calculator" class="lucide-icon icon"></i> Kalkulator Arbitrase
+              <i data-lucide="calculator" class="lucide-icon icon"></i> Arbitrage Calculator
             </h2>
           </div>
           <div class="panel-body">
@@ -259,70 +273,96 @@
               
               <!-- Buy Exchange -->
               <div class="calc-field">
-                <label class="calc-label" for="calc-buy-exchange">Beli Dari</label>
+                <label class="calc-label" for="calc-buy-exchange">Buy From</label>
                 <select class="calc-select" id="calc-buy-exchange">
-                  <option value="">Pilih Exchange</option>
+                  <option value="">Select Exchange</option>
                 </select>
               </div>
               
               <!-- Sell Exchange -->
               <div class="calc-field">
-                <label class="calc-label" for="calc-sell-exchange">Jual Ke</label>
+                <label class="calc-label" for="calc-sell-exchange">Sell To</label>
                 <select class="calc-select" id="calc-sell-exchange">
-                  <option value="">Pilih Exchange</option>
+                  <option value="">Select Exchange</option>
                 </select>
               </div>
               
               <!-- Amount -->
               <div class="calc-field">
-                <label class="calc-label" for="calc-amount">Jumlah (troy ounce)</label>
+                <label class="calc-label" for="calc-amount">Amount (troy oz)</label>
                 <input type="number" class="calc-input" id="calc-amount" value="1" min="0.01" step="0.1" placeholder="1.0">
+              </div>
+
+              <!-- Token Transfer Fee (%) -->
+              <div class="calc-field">
+                <label class="calc-label" for="calc-transfer-fee">Contract Transfer Fee (%)</label>
+                <input type="number" class="calc-input" id="calc-transfer-fee" value="0.02" min="0" step="0.01" placeholder="0.02">
+              </div>
+
+              <!-- CEX Withdrawal Fee (USD) -->
+              <div class="calc-field">
+                <label class="calc-label" for="calc-withdrawal-fee">Withdrawal Fee ($)</label>
+                <input type="number" class="calc-input" id="calc-withdrawal-fee" value="0" min="0" step="1" placeholder="0.00">
+              </div>
+
+              <!-- Network Gas Fee (USD) -->
+              <div class="calc-field">
+                <label class="calc-label" for="calc-gas-fee">Gas Fee ($)</label>
+                <input type="number" class="calc-input" id="calc-gas-fee" value="0" min="0" step="1" placeholder="0.00">
               </div>
               
               <!-- Auto-pair -->
-              <div class="calc-field" style="justify-content: flex-end;">
-                <button class="auto-pair-btn" id="auto-pair-btn"><i data-lucide="zap" class="lucide-icon"></i> Isi Pasangan Terbaik Otomatis</button>
+              <div class="calc-field full-width" style="justify-content: flex-end;">
+                <button class="auto-pair-btn" id="auto-pair-btn"><i data-lucide="zap" class="lucide-icon"></i> Auto-fill Best Pair</button>
               </div>
               
-              <div class="calc-divider"></div>
+              <div class="calc-divider full-width"></div>
               
               <!-- Results -->
-              <div class="calc-results">
+              <div class="calc-results full-width">
                 <div class="calc-result-row">
-                  <span class="calc-result-label">Harga Beli</span>
+                  <span class="calc-result-label">Buy Price</span>
                   <span class="calc-result-value" id="calc-buy-price">$—</span>
                 </div>
                 <div class="calc-result-row">
-                  <span class="calc-result-label">Harga Jual</span>
+                  <span class="calc-result-label">Sell Price</span>
                   <span class="calc-result-value" id="calc-sell-price">$—</span>
                 </div>
                 <div class="calc-result-row">
-                  <span class="calc-result-label">Total Beli</span>
+                  <span class="calc-result-label">Total Buy Cost</span>
                   <span class="calc-result-value" id="calc-buy-cost">$—</span>
                 </div>
                 <div class="calc-result-row">
-                  <span class="calc-result-label">Total Jual</span>
+                  <span class="calc-result-label">Total Sell Revenue</span>
                   <span class="calc-result-value" id="calc-sell-revenue">$—</span>
                 </div>
                 <div class="calc-result-row">
-                  <span class="calc-result-label">Fee Beli</span>
+                  <span class="calc-result-label">Buy Taker Fee</span>
                   <span class="calc-result-value text-red" id="calc-buy-fee">$—</span>
                 </div>
                 <div class="calc-result-row">
-                  <span class="calc-result-label">Fee Jual</span>
+                  <span class="calc-result-label">Sell Taker Fee</span>
                   <span class="calc-result-value text-red" id="calc-sell-fee">$—</span>
                 </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Token Transfer Fee</span>
+                  <span class="calc-result-value text-red" id="calc-transfer-fee-val">$—</span>
+                </div>
+                <div class="calc-result-row">
+                  <span class="calc-result-label">Network & Gas Fees</span>
+                  <span class="calc-result-value text-red" id="calc-network-fee-val">$—</span>
+                </div>
                 <div class="calc-result-row" style="grid-column: 1 / -1;">
-                  <span class="calc-result-label">Profit Kotor</span>
+                  <span class="calc-result-label">Gross Profit</span>
                   <span class="calc-result-value" id="calc-gross-profit">$—</span>
                 </div>
                 
                 <!-- Big Net Profit -->
                 <div class="calc-result-big">
-                  <span class="calc-result-label">Profit Bersih</span>
+                  <span class="calc-result-label">Net Profit</span>
                   <span class="calc-result-value" id="calc-net-profit">$—</span>
                   <span class="calc-result-value" id="calc-profit-pct" style="font-size: var(--text-lg);">—%</span>
-                  <span class="profit-indicator neutral" id="profit-indicator">Pilih exchange</span>
+                  <span class="profit-indicator neutral" id="profit-indicator">Select exchange</span>
                 </div>
               </div>
               
@@ -337,7 +377,7 @@
           <div class="panel">
             <div class="panel-header">
               <h2 class="panel-title">
-                <i data-lucide="pie-chart" class="lucide-icon icon"></i> Distribusi Volume
+                <i data-lucide="pie-chart" class="lucide-icon icon"></i> Volume Distribution
               </h2>
             </div>
             <div class="panel-body">
@@ -351,7 +391,7 @@
           <div class="panel">
             <div class="panel-header">
               <h2 class="panel-title">
-                <i data-lucide="activity" class="lucide-icon icon"></i> Tren Spread
+                <i data-lucide="activity" class="lucide-icon icon"></i> Spread Trend
               </h2>
             </div>
             <div class="panel-body">
@@ -376,21 +416,21 @@
       <div class="footer-inner">
         
         <div class="footer-disclaimer">
-          <strong><i data-lucide="alert-triangle" class="lucide-icon" style="width:14px;height:14px;vertical-align:-2px;"></i> Disclaimer:</strong> Data yang ditampilkan bersifat informasional dan bukan merupakan saran investasi atau keuangan. 
-          Harga yang ditampilkan adalah harga indikasi dan mungkin berbeda dari harga eksekusi aktual. 
-          Selalu lakukan riset sendiri (DYOR) sebelum melakukan trading.
+          <strong><i data-lucide="alert-triangle" class="lucide-icon" style="width:14px;height:14px;vertical-align:-2px;"></i> Disclaimer:</strong> Displayed market data is for informational purposes only and does not constitute financial or investment advice. 
+          Displayed prices are indicative and may differ from actual execution prices. 
+          Always conduct your own research (DYOR) before trading.
         </div>
         
         <div class="footer-info">
           <span>© 2026 Gold Arbitrage Analyzer</span>
-          <span class="text-muted">Data dari API publik exchange</span>
+          <span class="text-muted">Data from exchange public APIs</span>
           <div class="footer-sources">
-            <a href="https://www.binance.com" target="_blank" rel="noopener">Binance</a>
-            <a href="https://www.okx.com" target="_blank" rel="noopener">OKX</a>
-            <a href="https://www.bybit.com" target="_blank" rel="noopener">Bybit</a>
-            <a href="https://www.kucoin.com" target="_blank" rel="noopener">KuCoin</a>
-            <a href="https://www.gate.io" target="_blank" rel="noopener">Gate.io</a>
-            <a href="https://www.coingecko.com" target="_blank" rel="noopener">CoinGecko</a>
+            <a href="https://www.binance.com" target="_blank" rel="noopener noreferrer">Binance</a>
+            <a href="https://www.okx.com" target="_blank" rel="noopener noreferrer">OKX</a>
+            <a href="https://www.bybit.com" target="_blank" rel="noopener noreferrer">Bybit</a>
+            <a href="https://www.kucoin.com" target="_blank" rel="noopener noreferrer">KuCoin</a>
+            <a href="https://www.gate.io" target="_blank" rel="noopener noreferrer">Gate.io</a>
+            <a href="https://www.coingecko.com" target="_blank" rel="noopener noreferrer">CoinGecko</a>
           </div>
         </div>
         

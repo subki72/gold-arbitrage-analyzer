@@ -1,8 +1,9 @@
 // ============================================================
-// header.js — Header component
+// header.js — Navigation header & control bar component
 // ============================================================
 
 import { appState } from '../services/state.js';
+import { cache } from '../services/cache.js';
 import { LABELS } from '../utils/constants.js';
 import { formatTimeAgo, formatTime } from '../utils/formatters.js';
 import { $ } from '../utils/helpers.js';
@@ -18,7 +19,7 @@ export function initHeader() {
     });
   });
 
-  // ── Refresh Toggle ──
+  // ── Auto-Refresh Toggle ──
   const refreshToggle = $('#refresh-toggle');
   if (refreshToggle) {
     refreshToggle.addEventListener('change', () => {
@@ -26,25 +27,27 @@ export function initHeader() {
     });
   }
 
-  // ── Refresh Now Button ──
+  // ── Manual Refresh Now Button ──
   const refreshBtn = $('#refresh-now-btn');
   if (refreshBtn) {
     refreshBtn.addEventListener('click', () => {
+      // Invalidate memory cache so manual refresh always fetches fresh network data
+      cache.clear();
       appState.set('forceRefresh', Date.now());
       refreshBtn.classList.add('spinning');
       setTimeout(() => refreshBtn.classList.remove('spinning'), 1000);
     });
   }
 
-  // ── Interval Selector ──
+  // ── Refresh Interval Selector ──
   const intervalSelect = $('#refresh-interval');
   if (intervalSelect) {
     intervalSelect.addEventListener('change', () => {
-      appState.set('refreshInterval', parseInt(intervalSelect.value));
+      appState.set('refreshInterval', parseInt(intervalSelect.value, 10));
     });
   }
 
-  // ── Update last updated timestamp ──
+  // ── Update Last Updated Timestamp ──
   appState.on('lastUpdated', (ts) => {
     const el = $('#last-updated');
     if (el && ts) {
@@ -53,12 +56,12 @@ export function initHeader() {
     }
   });
 
-  // ── Update connection status ──
+  // ── Update Connection Status ──
   updateConnectionStatus();
   window.addEventListener('online', updateConnectionStatus);
   window.addEventListener('offline', updateConnectionStatus);
 
-  // ── Live clock ──
+  // ── Live UTC/Local Clock (en-US locale) ──
   updateClock();
   setInterval(updateClock, 1000);
 }
@@ -66,7 +69,7 @@ export function initHeader() {
 function updateConnectionStatus() {
   const statusEl = $('#connection-status');
   if (!statusEl) return;
-  
+
   if (navigator.onLine) {
     statusEl.className = 'status-indicator online';
     statusEl.title = LABELS.online;
@@ -79,10 +82,15 @@ function updateConnectionStatus() {
 function updateClock() {
   const clockEl = $('#live-clock');
   if (clockEl) {
-    clockEl.textContent = new Date().toLocaleTimeString('id-ID', {
+    clockEl.textContent = new Date().toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
+      hour12: false,
     });
   }
 }
+
+export default {
+  initHeader,
+};

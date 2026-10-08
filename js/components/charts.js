@@ -1,11 +1,11 @@
 // ============================================================
-// charts.js — Chart.js visualizations
+// charts.js — Chart.js visualization components (English)
 // ============================================================
 
 import { appState } from '../services/state.js';
 import { rankExchanges } from '../services/arbitrage.js';
 import { formatCurrency, formatPercentage, formatVolume } from '../utils/formatters.js';
-import { CHART_COLORS, CHART_COLORS_ALPHA } from '../utils/constants.js';
+import { CHART_COLORS } from '../utils/constants.js';
 import { CONFIG } from '../config.js';
 
 let priceCompChart = null;
@@ -40,7 +40,12 @@ export function initCharts() {
   appState.on('priceHistory', updatePriceHistoryChart);
   appState.on('spreadHistory', updateSpreadTrendChart);
 
-  // ── Timeframe selector ──
+  // Reset charts on token change to prevent cross-asset chart corruption
+  appState.on('selectedToken', () => {
+    resetCharts();
+  });
+
+  // Timeframe selector
   document.querySelectorAll('.tf-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
@@ -50,6 +55,30 @@ export function initCharts() {
   });
 }
 
+export function resetCharts() {
+  if (priceCompChart && priceCompChart.data) {
+    priceCompChart.data.labels = [];
+    priceCompChart.data.datasets = [];
+    priceCompChart.update();
+  }
+  if (volumeChart && volumeChart.data) {
+    volumeChart.data.labels = [];
+    volumeChart.data.datasets = [];
+    volumeChart.update();
+  }
+  if (priceHistoryChart && priceHistoryChart.data) {
+    priceHistoryChart.data.datasets = [];
+    priceHistoryChart.update();
+  }
+  if (spreadTrendChart && spreadTrendChart.data) {
+    spreadTrendChart.data.labels = [];
+    if (spreadTrendChart.data.datasets?.[0]) {
+      spreadTrendChart.data.datasets[0].data = [];
+    }
+    spreadTrendChart.update();
+  }
+}
+
 // ═══════════════════════════════════════
 // Price Comparison Bar Chart
 // ═══════════════════════════════════════
@@ -57,7 +86,7 @@ function updatePriceComparisonChart(exchanges) {
   const canvas = document.getElementById('price-comp-chart');
   if (!canvas || !window.Chart) return;
 
-  const sorted = rankExchanges(exchanges, 'price', 'asc');
+  const sorted = rankExchanges(exchanges || [], 'price', 'asc');
   if (sorted.length === 0) return;
 
   const labels = sorted.map(e => e.displayName);
@@ -65,7 +94,6 @@ function updatePriceComparisonChart(exchanges) {
   const colors = sorted.map(e => e.color || '#f5b820');
   const colorsAlpha = colors.map(c => c + '33');
 
-  // Cari min dan max untuk skala yang lebih jelas
   const minPrice = Math.min(...prices);
   const maxPrice = Math.max(...prices);
   const padding = (maxPrice - minPrice) * 0.3 || maxPrice * 0.001;
@@ -73,7 +101,7 @@ function updatePriceComparisonChart(exchanges) {
   const data = {
     labels,
     datasets: [{
-      label: 'Harga (USD)',
+      label: 'Price (USD)',
       data: prices,
       backgroundColor: colorsAlpha,
       borderColor: colors,
@@ -93,8 +121,9 @@ function updatePriceComparisonChart(exchanges) {
         callbacks: {
           label: (ctx) => ` ${formatCurrency(ctx.raw)}`,
           afterLabel: (ctx) => {
-            const ex = sorted[ctx.dataIndex];
-            return `Perubahan 24h: ${formatPercentage(ex.change24h.percentage)}`;
+            const ex = sorted?.[ctx.dataIndex];
+            if (!ex?.change24h?.percentage) return '';
+            return `24h Change: ${formatPercentage(ex.change24h.percentage)}`;
           }
         }
       }
@@ -139,23 +168,22 @@ function updatePriceHistoryChart(historyData) {
   const canvas = document.getElementById('price-history-chart');
   if (!canvas || !window.Chart || !historyData) return;
 
-  // historyData: { exchangeId: [[ts, price], ...], ... }
   const datasets = [];
   let colorIdx = 0;
 
   for (const [exchangeId, points] of Object.entries(historyData)) {
-    if (!points || points.length === 0) continue;
-    
+    if (!Array.isArray(points) || points.length === 0) continue;
+
     let label = exchangeId;
     let color = CHART_COLORS[colorIdx % CHART_COLORS.length];
     let borderWidth = 2;
     let borderDash = [];
-    
+
     if (exchangeId === 'global_avg') {
-      label = 'Rata-rata Global (CoinGecko)';
-      color = '#f5b820'; // Gold
+      label = 'Global Average (CoinGecko)';
+      color = '#f5b820';
       borderWidth = 3;
-      borderDash = [5, 5]; // Dashed line to distinguish from exact exchanges
+      borderDash = [5, 5];
     } else {
       const config = CONFIG.exchanges[exchangeId];
       if (config) {
@@ -166,12 +194,12 @@ function updatePriceHistoryChart(historyData) {
     }
 
     datasets.push({
-      label: label,
+      label,
       data: points.map(([ts, price]) => ({ x: ts, y: price })),
       borderColor: color,
       backgroundColor: color + '15',
-      borderWidth: borderWidth,
-      borderDash: borderDash,
+      borderWidth,
+      borderDash,
       pointRadius: 0,
       pointHoverRadius: 4,
       tension: 0.3,
@@ -199,7 +227,7 @@ function updatePriceHistoryChart(historyData) {
         callbacks: {
           title: (items) => {
             if (items.length > 0) {
-              return new Date(items[0].raw.x).toLocaleString('id-ID');
+              return new Date(items[0].raw.x).toLocaleString('en-US');
             }
             return '';
           },
@@ -214,7 +242,7 @@ function updatePriceHistoryChart(historyData) {
           displayFormats: {
             minute: 'HH:mm',
             hour: 'HH:mm',
-            day: 'dd MMM',
+            day: 'MMM dd',
           }
         },
         grid: { color: 'rgba(255,255,255,0.04)' },
@@ -246,15 +274,15 @@ function updateVolumeChart(exchanges) {
   const canvas = document.getElementById('volume-chart');
   if (!canvas || !window.Chart) return;
 
-  const active = exchanges
-    .filter(e => e.status === 'active' && e.volume24h.quote > 0)
+  const active = (exchanges || [])
+    .filter(e => e.status === 'active' && e.volume24h?.quote > 0)
     .sort((a, b) => b.volume24h.quote - a.volume24h.quote);
 
   if (active.length === 0) return;
 
   const labels = active.map(e => e.displayName);
   const volumes = active.map(e => e.volume24h.quote);
-  const colors = active.map(e => e.color || '#888');
+  const colors = active.map(e => e.color || '#888888');
 
   const data = {
     labels,
@@ -283,7 +311,7 @@ function updateVolumeChart(exchanges) {
         callbacks: {
           label: (ctx) => {
             const total = volumes.reduce((a, b) => a + b, 0);
-            const pct = ((ctx.raw / total) * 100).toFixed(1);
+            const pct = total > 0 ? ((ctx.raw / total) * 100).toFixed(1) : 0;
             return ` ${ctx.label}: ${formatVolume(ctx.raw)} (${pct}%)`;
           }
         }
@@ -313,7 +341,7 @@ function updateSpreadTrendChart(spreadHistory) {
   const data = {
     labels: spreadHistory.map(p => new Date(p.timestamp)),
     datasets: [{
-      label: 'Spread Maks (%)',
+      label: 'Max Spread (%)',
       data: spreadHistory.map(p => p.maxSpread),
       borderColor: '#f5b820',
       backgroundColor: 'rgba(245, 184, 32, 0.1)',
@@ -334,7 +362,7 @@ function updateSpreadTrendChart(spreadHistory) {
         callbacks: {
           title: (items) => {
             if (items.length > 0) {
-              return new Date(items[0].label).toLocaleTimeString('id-ID');
+              return new Date(items[0].label).toLocaleTimeString('en-US');
             }
             return '';
           },
@@ -366,3 +394,8 @@ function updateSpreadTrendChart(spreadHistory) {
     spreadTrendChart = new Chart(canvas, { type: 'line', data, options });
   }
 }
+
+export default {
+  initCharts,
+  resetCharts,
+};

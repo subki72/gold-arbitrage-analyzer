@@ -1,5 +1,5 @@
 // ============================================================
-// coingecko.js — CoinGecko fallback API
+// coingecko.js — CoinGecko fallback & historical aggregator API
 // ============================================================
 
 import { CONFIG } from '../config.js';
@@ -7,11 +7,11 @@ import { fetchWithTimeout } from '../utils/helpers.js';
 import { normalizeCoinGeckoTicker } from './normalizer.js';
 
 const BASE_URL = CONFIG.coingecko.baseUrl;
+const TIMEOUT = CONFIG.apiTimeout;
 
 /**
- * Fetch harga dari CoinGecko (fallback)
- * Menggunakan tickers endpoint untuk mendapatkan harga per-exchange
- * @param {string} tokenKey - 'PAXG' atau 'XAUT'
+ * Fetch spot tickers from CoinGecko (fallback feed)
+ * @param {string} [tokenKey='PAXG']
  * @returns {Promise<Array>}
  */
 export async function fetchCoinGeckoTickers(tokenKey = 'PAXG') {
@@ -20,11 +20,11 @@ export async function fetchCoinGeckoTickers(tokenKey = 'PAXG') {
 
   try {
     const url = `${BASE_URL}/coins/${tokenConfig.coingeckoId}/tickers?include_exchange_logo=false&depth=false`;
-    const data = await fetchWithTimeout(url, {}, 10000);
+    const data = await fetchWithTimeout(url, {}, TIMEOUT);
 
-    if (!data?.tickers) return [];
+    if (!data?.tickers || !Array.isArray(data.tickers)) return [];
 
-    // Filter hanya USDT pairs dan normalize
+    // Filter for USDT / USD settlement pairs and normalize
     return data.tickers
       .filter(t => {
         const target = t.target?.toUpperCase();
@@ -33,16 +33,16 @@ export async function fetchCoinGeckoTickers(tokenKey = 'PAXG') {
       .map(t => normalizeCoinGeckoTicker(t, tokenKey))
       .filter(t => t !== null && t.price.last > 0);
   } catch (error) {
-    console.warn(`[CoinGecko] Gagal fetch tickers: ${error.message}`);
+    console.warn(`[CoinGecko] Failed to fetch tickers: ${error.message}`);
     return [];
   }
 }
 
 /**
- * Fetch data historis dari CoinGecko
- * @param {string} tokenKey - 'PAXG' atau 'XAUT'
- * @param {number} days - jumlah hari (1, 7, 30, 90)
- * @returns {Promise<Array>} Array of [timestamp, price]
+ * Fetch historical price chart series from CoinGecko
+ * @param {string} [tokenKey='PAXG']
+ * @param {number} [days=1]
+ * @returns {Promise<Array<[number, number]>>} Array of [timestamp, price]
  */
 export async function fetchCoinGeckoHistory(tokenKey = 'PAXG', days = 1) {
   const tokenConfig = CONFIG.tokens[tokenKey];
@@ -50,28 +50,34 @@ export async function fetchCoinGeckoHistory(tokenKey = 'PAXG', days = 1) {
 
   try {
     const url = `${BASE_URL}/coins/${tokenConfig.coingeckoId}/market_chart?vs_currency=usd&days=${days}`;
-    const data = await fetchWithTimeout(url, {}, 10000);
+    const data = await fetchWithTimeout(url, {}, TIMEOUT);
 
-    if (!data?.prices) return [];
-    return data.prices; // [[timestamp, price], ...]
+    if (!data?.prices || !Array.isArray(data.prices)) return [];
+    return data.prices;
   } catch (error) {
-    console.warn(`[CoinGecko] Gagal fetch history: ${error.message}`);
+    console.warn(`[CoinGecko] Failed to fetch market chart: ${error.message}`);
     return [];
   }
 }
 
 /**
- * Fetch harga sederhana dari CoinGecko
- * @param {string} tokenKey
- * @returns {Promise<Object|null>}
+ * Fetch simple spot price snapshot from CoinGecko
+ * @param {string} [tokenKey='PAXG']
+ * @returns {Promise<{ price: number, change24h: number, volume24h: number }|null>}
  */
 export async function fetchCoinGeckoSimplePrice(tokenKey = 'PAXG') {
   const tokenConfig = CONFIG.tokens[tokenKey];
   if (!tokenConfig) return null;
 
   try {
-    const url = `${BASE_URL}/simple/price?ids=${tokenConfig.coingeckoId}&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true`;
-    const data = await fetchWithTimeout(url, {}, 10000);
+    const params = new URLSearchParams({
+      ids: tokenConfig.coingeckoId,
+      vs_currencies: 'usd',
+      include_24hr_change: 'true',
+      include_24hr_vol: 'true',
+    });
+    const url = `${BASE_URL}/simple/price?${params.toString()}`;
+    const data = await fetchWithTimeout(url, {}, TIMEOUT);
 
     const coinData = data?.[tokenConfig.coingeckoId];
     if (!coinData) return null;
@@ -82,7 +88,13 @@ export async function fetchCoinGeckoSimplePrice(tokenKey = 'PAXG') {
       volume24h: coinData.usd_24h_vol,
     };
   } catch (error) {
-    console.warn(`[CoinGecko] Gagal fetch simple price: ${error.message}`);
+    console.warn(`[CoinGecko] Failed to fetch simple price: ${error.message}`);
     return null;
   }
 }
+
+export default {
+  fetchCoinGeckoTickers,
+  fetchCoinGeckoHistory,
+  fetchCoinGeckoSimplePrice,
+};

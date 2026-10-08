@@ -185,9 +185,10 @@ body::before {
   top: -200px;
   left: 50%;
   transform: translateX(-50%);
-  width: 800px;
+  width: 100vw;
+  max-width: 2400px;
   height: 600px;
-  background: radial-gradient(ellipse, hsla(43, 96%, 56%, 0.06) 0%, transparent 70%);
+  background: radial-gradient(ellipse, hsla(43, 96%, 56%, 0.07) 0%, transparent 70%);
   pointer-events: none;
   z-index: 0;
 }
@@ -219,9 +220,10 @@ img { max-width: 100%; height: auto; }
    3. Layout
    ═══════════════════════════════════════ */
 .container {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 var(--space-6);
+  width: 100%;
+  max-width: 100%;
+  margin: 0;
+  padding: 0 clamp(1.25rem, 2vw, 2.5rem);
 }
 
 .section {
@@ -269,13 +271,14 @@ img { max-width: 100%; height: auto; }
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 .header-left {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  flex-shrink: 0;
 }
 
 .logo {
@@ -321,13 +324,16 @@ img { max-width: 100%; height: auto; }
 .header-center {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-3);
+  flex: 1;
 }
 
 .header-right {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+  flex-shrink: 0;
 }
 
 /* Token Selector */
@@ -570,6 +576,36 @@ img { max-width: 100%; height: auto; }
 @keyframes loadingSlide {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(100%); }
+}
+
+/* ═══════════════════════════════════════
+   5b. Global Alert Banner
+   ═══════════════════════════════════════ */
+.global-alert {
+  background: rgba(245, 184, 32, 0.12);
+  border: 1px solid rgba(245, 184, 32, 0.35);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  margin-bottom: var(--space-6);
+  color: #eef0f6;
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  transition: all var(--t-base) ease;
+}
+
+.global-alert-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+}
+
+.global-alert .alert-icon {
+  color: var(--gold);
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
 }
 
 /* ═══════════════════════════════════════
@@ -1205,7 +1241,7 @@ img { max-width: 100%; height: auto; }
 .footer-disclaimer {
   font-size: var(--text-xs);
   color: var(--text-tertiary);
-  max-width: 500px;
+  max-width: 700px;
   line-height: 1.7;
 }
 

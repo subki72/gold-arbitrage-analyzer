@@ -1,6 +1,8 @@
 // ============================================================
-// cache.js — In-memory cache with TTL
+// cache.js — In-memory caching manager with TTL
 // ============================================================
+
+import { CONFIG } from '../config.js';
 
 class CacheManager {
   constructor() {
@@ -8,7 +10,7 @@ class CacheManager {
   }
 
   /**
-   * Get cached value
+   * Retrieve cached value if unexpired
    * @param {string} key
    * @returns {*|null}
    */
@@ -25,12 +27,12 @@ class CacheManager {
   }
 
   /**
-   * Set cached value
+   * Set cache entry with expiration TTL
    * @param {string} key
    * @param {*} value
-   * @param {number} ttl - Time to live in ms (default: 25s)
+   * @param {number} [ttl=CONFIG.cacheTTL] - Time to live in ms
    */
-  set(key, value, ttl = 25000) {
+  set(key, value, ttl = CONFIG.cacheTTL) {
     this._cache.set(key, {
       value,
       expiry: Date.now() + ttl,
@@ -39,21 +41,25 @@ class CacheManager {
   }
 
   /**
-   * Check if key exists and is valid
+   * Check if a valid, unexpired entry exists for key
+   * @param {string} key
+   * @returns {boolean}
    */
   has(key) {
     return this.get(key) !== null;
   }
 
   /**
-   * Invalidate specific key
+   * Invalidate specific cache key
+   * @param {string} key
    */
   invalidate(key) {
     this._cache.delete(key);
   }
 
   /**
-   * Invalidate all keys matching a prefix
+   * Invalidate all keys matching prefix
+   * @param {string} prefix
    */
   invalidatePrefix(prefix) {
     for (const key of this._cache.keys()) {
@@ -64,14 +70,15 @@ class CacheManager {
   }
 
   /**
-   * Clear all cache
+   * Clear all cache entries
    */
   clear() {
     this._cache.clear();
   }
 
   /**
-   * Get cache stats
+   * Return cache diagnostic statistics
+   * @returns {{ total: number, valid: number, expired: number }}
    */
   stats() {
     let valid = 0;

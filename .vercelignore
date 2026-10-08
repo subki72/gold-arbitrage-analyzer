@@ -1,0 +1,8 @@
+Prompt/
+qa-report/
+tests/
+.agents/
+.github/
+*.md
+!README.md
+vitest.config.*

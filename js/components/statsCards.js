@@ -1,39 +1,47 @@
 // ============================================================
-// statsCards.js — Stats cards component (Best Buy, Best Sell, Max Spread, Volume)
+// statsCards.js — Primary KPI cards component (Best Buy, Best Sell, Max Spread, Volume)
 // ============================================================
 
 import { appState } from '../services/state.js';
-import { findBestBuy, findBestSell, findMaxSpread, calculateTotalVolume } from '../services/arbitrage.js';
+import {
+  findBestBuy,
+  findBestSell,
+  findMaxSpread,
+  calculateTotalVolume,
+  getEffectiveBuyPrice,
+  getEffectiveSellPrice,
+} from '../services/arbitrage.js';
 import { formatCurrency, formatPercentage, formatVolume } from '../utils/formatters.js';
 import { animateValue, $ } from '../utils/helpers.js';
+import { CONFIG } from '../config.js';
 
 export function initStatsCards() {
   appState.on('exchanges', updateStatsCards);
 }
 
 function updateStatsCards(exchanges) {
-  if (!exchanges || exchanges.length === 0) return;
-
-  const bestBuy = findBestBuy(exchanges);
-  const bestSell = findBestSell(exchanges);
-  const maxSpreadInfo = findMaxSpread(exchanges);
-  const totalVolume = calculateTotalVolume(exchanges);
+  const safeExchanges = Array.isArray(exchanges) ? exchanges : [];
+  const bestBuy = findBestBuy(safeExchanges);
+  const bestSell = findBestSell(safeExchanges);
+  const maxSpreadInfo = findMaxSpread(safeExchanges);
+  const totalVolume = calculateTotalVolume(safeExchanges);
+  const activeCount = safeExchanges.filter(e => e.status === 'active' && e.price?.last > 0).length;
 
   // ── Best Buy Card ──
   updateCard('best-buy', {
-    value: bestBuy?.price.last,
+    value: bestBuy ? getEffectiveBuyPrice(bestBuy) : null,
     formatter: v => formatCurrency(v),
     sub: bestBuy?.displayName || '—',
-    trend: bestBuy?.change24h.percentage,
+    trend: bestBuy?.change24h?.percentage,
     accentClass: 'card-green',
   });
 
   // ── Best Sell Card ──
   updateCard('best-sell', {
-    value: bestSell?.price.last,
+    value: bestSell ? getEffectiveSellPrice(bestSell) : null,
     formatter: v => formatCurrency(v),
     sub: bestSell?.displayName || '—',
-    trend: bestSell?.change24h.percentage,
+    trend: bestSell?.change24h?.percentage,
     accentClass: 'card-gold',
   });
 
@@ -42,18 +50,18 @@ function updateStatsCards(exchanges) {
     ? `${maxSpreadInfo.buyExchange.displayName} → ${maxSpreadInfo.sellExchange.displayName}`
     : '—';
   updateCard('max-spread', {
-    value: maxSpreadInfo?.spread.percentage,
+    value: maxSpreadInfo?.spread?.percentage,
     formatter: v => formatPercentage(v, 3),
     sub: spreadPair,
-    spreadValue: maxSpreadInfo?.spread.absolute,
-    accentClass: getSpreadClass(maxSpreadInfo?.spread.percentage),
+    spreadValue: maxSpreadInfo?.spread?.absolute,
+    accentClass: getSpreadClass(maxSpreadInfo?.spread?.percentage || 0),
   });
 
   // ── Total Volume Card ──
   updateCard('total-volume', {
-    value: totalVolume,
+    value: activeCount > 0 ? totalVolume : null,
     formatter: v => formatVolume(v),
-    sub: `${exchanges.filter(e => e.status === 'active').length} exchange aktif`,
+    sub: `${activeCount} active ${activeCount === 1 ? 'exchange' : 'exchanges'}`,
     accentClass: 'card-blue',
   });
 }
@@ -64,27 +72,34 @@ function updateCard(cardId, { value, formatter, sub, trend, spreadValue, accentC
   const trendEl = $(`#${cardId}-trend`);
   const card = $(`#${cardId}-card`);
 
-  if (valueEl && value != null) {
+  if (valueEl && value != null && Number.isFinite(value)) {
     animateValue(valueEl, value, 600, formatter);
+  } else if (valueEl) {
+    valueEl.textContent = cardId === 'max-spread' ? '—%' : '$—';
   }
 
-  if (subEl && sub) {
-    subEl.textContent = sub;
+  if (subEl) {
+    subEl.textContent = sub || '—';
   }
 
-  if (trendEl && trend != null) {
+  if (trendEl && trend != null && Number.isFinite(trend)) {
     trendEl.textContent = formatPercentage(trend);
     trendEl.className = `card-trend ${trend >= 0 ? 'trend-up' : 'trend-down'}`;
+  } else if (trendEl) {
+    trendEl.textContent = '—';
+    trendEl.className = 'card-trend';
   }
 
-  if (spreadValue != null) {
-    const spreadAbsEl = $(`#${cardId}-abs`);
-    if (spreadAbsEl) {
+  const spreadAbsEl = $(`#${cardId}-abs`);
+  if (spreadAbsEl) {
+    if (spreadValue != null && Number.isFinite(spreadValue)) {
       spreadAbsEl.textContent = formatCurrency(spreadValue);
+    } else {
+      spreadAbsEl.textContent = '—';
     }
   }
 
-  // Update accent class
+  // Update visual accent class
   if (card && accentClass) {
     card.className = card.className.replace(/card-(green|gold|red|blue|warning)/g, '').trim();
     card.classList.add(accentClass);
@@ -92,8 +107,12 @@ function updateCard(cardId, { value, formatter, sub, trend, spreadValue, accentC
 }
 
 function getSpreadClass(percentage) {
-  if (percentage >= 1.0) return 'card-green';
-  if (percentage >= 0.5) return 'card-gold';
-  if (percentage >= 0.3) return 'card-warning';
+  if (percentage >= CONFIG.arbitrage.greatSpread) return 'card-green';
+  if (percentage >= CONFIG.arbitrage.goodSpread) return 'card-gold';
+  if (percentage >= CONFIG.arbitrage.minSpreadAlert) return 'card-warning';
   return 'card-blue';
 }
+
+export default {
+  initStatsCards,
+};

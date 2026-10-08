@@ -1,0 +1,29 @@
+{
+  "name": "gold-arbitrage-analyzer",
+  "version": "1.0.0",
+  "description": "Real-time arbitrage opportunity and price comparison analyzer for gold-backed cryptocurrency tokens (PAXG & XAUT).",
+  "type": "module",
+  "main": "js/app.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/subki72/gold-arbitrage-analyzer.git"
+  },
+  "keywords": [
+    "gold",
+    "arbitrage",
+    "paxg",
+    "xaut",
+    "crypto",
+    "trading"
+  ],
+  "author": "Gold Arbitrage Analyzer",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^3.0.0"
+  }
+}

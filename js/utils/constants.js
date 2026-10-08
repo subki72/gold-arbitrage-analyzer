@@ -1,5 +1,5 @@
 // ============================================================
-// constants.js — Konstanta aplikasi
+// constants.js — Application constants & English UI labels
 // ============================================================
 
 // ── Exchange Metadata ──
@@ -32,79 +32,97 @@ export const CHART_COLORS_ALPHA = CHART_COLORS.map(c => c + '33');
 export const STATUS = {
   ACTIVE: 'active',
   ERROR: 'error',
+  OFFLINE: 'offline',
   STALE: 'stale',
   LOADING: 'loading',
 };
 
-// ── UI Labels (Bahasa Indonesia) ──
+// ── UI Labels (100% English Standardization) ──
 export const LABELS = {
   // Header
   appTitle: 'Gold Arbitrage Analyzer',
-  appSubtitle: 'Analisa Perbandingan Harga Emas',
+  appSubtitle: 'Gold Token Price Comparison & Arbitrage',
   
   // Stats Cards
-  bestBuy: 'Harga Terendah',
-  bestBuyDesc: 'Tempat Beli Terbaik',
-  bestSell: 'Harga Tertinggi',
-  bestSellDesc: 'Tempat Jual Terbaik',
-  maxSpread: 'Spread Terbesar',
-  maxSpreadDesc: 'Peluang Arbitrase',
-  totalVolume: 'Volume 24 Jam',
-  totalVolumeDesc: 'Total Perdagangan',
+  bestBuy: 'Lowest Price',
+  bestBuyDesc: 'Best Buy Execution',
+  bestSell: 'Highest Price',
+  bestSellDesc: 'Best Sell Execution',
+  maxSpread: 'Max Spread',
+  maxSpreadDesc: 'Arbitrage Opportunity',
+  totalVolume: '24h Volume',
+  totalVolumeDesc: 'Total Market Turnover',
 
   // Charts
-  priceComparison: 'Perbandingan Harga',
-  priceHistory: 'Riwayat Harga',
-  spreadHeatmap: 'Peta Sebaran Spread',
-  volumeDistribution: 'Distribusi Volume',
-  spreadTrend: 'Tren Spread',
+  priceComparison: 'Price Comparison Across Exchanges',
+  priceHistory: 'Price History',
+  spreadHeatmap: 'Spread Heatmap Matrix',
+  volumeDistribution: 'Volume Distribution',
+  spreadTrend: 'Spread Trend',
 
   // Table
   exchange: 'Exchange',
-  price: 'Harga',
-  change24h: 'Perubahan 24J',
+  price: 'Price',
+  change24h: '24h Change',
   volume: 'Volume',
-  fee: 'Fee',
-  spread: 'Spread',
-  action: 'Aksi',
+  fee: 'Fee (M/T)',
+  spread: 'Spread vs Best',
+  action: 'Action',
 
   // Calculator
-  calcTitle: 'Kalkulator Arbitrase',
-  buyFrom: 'Beli Dari',
-  sellTo: 'Jual Ke',
-  amount: 'Jumlah (oz)',
-  buyPrice: 'Harga Beli',
-  sellPrice: 'Harga Jual',
-  buyFee: 'Fee Beli',
-  sellFee: 'Fee Jual',
-  grossProfit: 'Profit Kotor',
-  netProfit: 'Profit Bersih',
-  profitPercent: 'Persentase Profit',
-  calculate: 'Hitung',
+  calcTitle: 'Arbitrage Calculator',
+  buyFrom: 'Buy From',
+  sellTo: 'Sell To',
+  amount: 'Amount (troy oz)',
+  withdrawalFee: 'Withdrawal Fee (USD)',
+  gasFee: 'Gas Fee (USD)',
+  transferFee: 'Token Transfer Fee',
+  buyPrice: 'Buy Price',
+  sellPrice: 'Sell Price',
+  buyFee: 'Buy Fee',
+  sellFee: 'Sell Fee',
+  grossProfit: 'Gross Profit',
+  netProfit: 'Net Profit',
+  profitPercent: 'Profit Percentage',
+  calculate: 'Calculate',
+  profitable: '✓ Profitable',
+  unprofitable: '✗ Unprofitable',
+  selectExchange: 'Select exchange',
+  autoPair: 'Auto-fill Best Pair',
 
-  // Status
-  loading: 'Memuat data...',
-  error: 'Gagal memuat data',
-  lastUpdated: 'Terakhir diperbarui',
-  autoRefresh: 'Refresh Otomatis',
-  refreshNow: 'Refresh Sekarang',
-  online: 'Terhubung',
-  offline: 'Tidak Terhubung',
+  // Status & Telemetry
+  loading: 'Loading data...',
+  error: 'Failed to load data',
+  lastUpdated: 'Last updated',
+  autoRefresh: 'Auto Refresh',
+  refreshNow: 'Refresh Now',
+  online: 'Connected',
+  offline: 'Disconnected',
+  insufficientData: 'Insufficient Live Market Data',
 
   // Footer
-  disclaimer: 'Data bersifat informasional, bukan saran investasi. Harga yang ditampilkan adalah harga indikasi dan mungkin berbeda dari harga eksekusi aktual.',
-  dataSource: 'Sumber Data',
+  disclaimer: 'Data is for informational purposes only and does not constitute financial advice. Displayed prices are indicative and may differ from actual execution prices. Always conduct your own research (DYOR) before trading.',
+  dataSource: 'Data Source: Exchange Public APIs',
 
   // Misc
-  noData: 'Data tidak tersedia',
+  noData: 'No data available',
   notAvailable: 'N/A',
-  all: 'Semua',
+  all: 'All',
 };
 
 // ── Timeframe Labels ──
 export const TIMEFRAMES = {
-  '1h': '1 Jam',
-  '4h': '4 Jam',
-  '24h': '24 Jam',
-  '7d': '7 Hari',
+  '1h': '1 Hour',
+  '4h': '4 Hours',
+  '24h': '24 Hours',
+  '7d': '7 Days',
+};
+
+export default {
+  EXCHANGE_META,
+  CHART_COLORS,
+  CHART_COLORS_ALPHA,
+  STATUS,
+  LABELS,
+  TIMEFRAMES,
 };
