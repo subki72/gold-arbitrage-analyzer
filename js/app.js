@@ -9,6 +9,7 @@ import { fetchAllExchanges } from './api/exchanges.js';
 import { fetchCoinGeckoHistory } from './api/coingecko.js';
 import { findMaxSpread } from './services/arbitrage.js';
 import { $ } from './utils/helpers.js';
+import { logger } from '../src/logger.js';
 
 // UI Components
 import { initHeader } from './components/header.js';
@@ -25,7 +26,7 @@ let currentFetchController = null;
 // Application Initialization
 // ═══════════════════════════════════════
 export async function init() {
-  console.log('⚡ Initializing Gold Arbitrage Analyzer...');
+  logger.info('Initializing Gold Arbitrage Analyzer');
 
   // Initialize UI components
   initHeader();
@@ -48,7 +49,7 @@ export async function init() {
   // Dismiss splash loading overlay
   hideLoadingOverlay();
 
-  console.log('✅ Gold Arbitrage Analyzer ready.');
+  logger.info('Gold Arbitrage Analyzer ready');
 }
 
 // ═══════════════════════════════════════
@@ -57,7 +58,7 @@ export async function init() {
 function setupStateListeners() {
   // Token toggle event: PAXG <-> XAUT
   appState.on('selectedToken', (newToken) => {
-    console.log(`🔄 Switched token to: ${newToken}`);
+    logger.info('Switched active token', { token: newToken });
 
     // Abort pending in-flight requests
     if (currentFetchController) {
@@ -94,7 +95,7 @@ function setupStateListeners() {
 
   // User manual refresh button click
   appState.on('forceRefresh', () => {
-    console.log('⚡ Manual refresh requested by user');
+    logger.info('Manual refresh requested by user');
     cache.clear();
     fetchData(true);
   });
@@ -205,7 +206,7 @@ async function fetchData(force = false) {
     if (signal.aborted) return;
 
     if (exchanges.length === 0) {
-      console.warn(`[Market] No live data feeds returned for ${token}`);
+      logger.warn('No live data feeds returned for token', { token });
       const unreachableMsg = `All market data feeds for ${token} are currently unreachable.`;
       appState.update({
         exchanges: [],
@@ -220,7 +221,7 @@ async function fetchData(force = false) {
   } catch (error) {
     if (error.name === 'AbortError') return;
 
-    console.error('Market fetch error:', error);
+    logger.error('Market fetch error', { error: error.message || String(error) });
     const errorMsg = error.message || 'Market data fetch failed';
     appState.update({
       isLoading: false,
@@ -258,7 +259,7 @@ async function fetchHistoryData() {
       global_avg: filtered,
     });
   } catch (error) {
-    console.error('Failed to fetch historical market data:', error);
+    logger.error('Failed to fetch historical market data', { error: error.message || String(error) });
   }
 }
 
