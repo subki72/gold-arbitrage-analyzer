@@ -1,9 +1,9 @@
 # Gold Arbitrage Analyzer
 
 [![CI](https://github.com/subki72/gold-arbitrage-analyzer/actions/workflows/ci.yml/badge.svg)](https://github.com/subki72/gold-arbitrage-analyzer/actions/workflows/ci.yml)
-[![Tests](https://img.shields.io/badge/tests-65%20passed-success?logo=vitest)](https://github.com/subki72/gold-arbitrage-analyzer/actions)
-[![Production Status](https://img.shields.io/badge/status-production--ready%20(A--)-brightgreen)](https://github.com/subki72/gold-arbitrage-analyzer)
-[![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg)](https://opensource.org/licenses/MIT)
+[![Maturity Grade: Production](https://img.shields.io/badge/Maturity%20Grade-Production%20(71.8%2F100)-success.svg)](https://github.com/subki72/gold-arbitrage-analyzer)
+[![Tests](https://img.shields.io/badge/tests-67%20passed-success?logo=vitest)](https://github.com/subki72/gold-arbitrage-analyzer/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-gold.svg)](LICENSE)
 
 **Gold Arbitrage Analyzer** is an institutional-grade, real-time fintech web application engineered to monitor, compare, and identify cross-exchange spatial arbitrage opportunities for gold-backed cryptocurrency tokens (**PAXG** and **XAUT**) across 8 centralized cryptocurrency exchanges (Binance, OKX, Bybit, KuCoin, HTX, Gate.io, MEXC, Bitfinex).
 
@@ -109,12 +109,18 @@ Built with a high-performance **Serverless Backend-for-Frontend (BFF)** proxy an
 ```
 gold-arbitrage-analyzer/
 ├── .github/
-│   └── workflows/
-│       └── ci.yml               # GitHub Actions CI workflow (automated tests)
+│   ├── workflows/ci.yml         # GitHub Actions CI (lint, Vitest, build, Semgrep SAST, Trivy)
+│   └── dependabot.yml           # Automated weekly npm & GitHub Actions security updates
 ├── api/
+│   ├── health.js                # Liveness endpoint (/api/health) & centralized ErrorHandler
 │   └── prices.js                # Vercel Serverless BFF Proxy (sin1 Edge cached)
 ├── assets/
 │   └── favicon.svg              # Application icon
+├── doc/
+│   └── ARCHITECTURE.md          # System architecture & API specification
+├── src/
+│   ├── index.js                 # Modular package facade entrypoint
+│   └── logger.js                # Structured JSON leveled logger (INFO/WARN/ERROR)
 ├── js/
 │   ├── api/
 │   │   ├── coingecko.js         # CoinGecko ticker & market chart API integration
@@ -141,21 +147,54 @@ gold-arbitrage-analyzer/
 │   ├── arbitrage.test.js        # Financial calculations & ranking tests
 │   ├── cache.test.js            # Cache TTL & invalidation tests
 │   ├── formatters.test.js       # Formatting function tests
+│   ├── health.test.js           # Health probe & ErrorHandler tests
 │   ├── helpers.test.js          # DOM utility & helper tests
 │   ├── normalizer.test.js       # API payload normalization tests
 │   └── state.test.js            # Reactive state isolation tests
+├── .dockerignore                # Docker context exclusions
+├── .eslintrc.json               # ESLint code quality rules
 ├── .gitignore                   # Git exclusion rules
+├── .pre-commit-config.yaml      # Pre-commit lint & secret hooks
 ├── .vercelignore                # Static hosting distribution exclusion rules
+├── CHANGELOG.md                 # Semantic release changelog
+├── CONTRIBUTING.md              # Developer contribution guide
+├── Dockerfile                   # Hardened multi-stage non-root Node containerfile
 ├── index.css                    # Design system & full-width fluid layout styles
 ├── index.html                   # HTML5 shell with SRI hashes & semantic layout
+├── LICENSE                      # MIT License
+├── Makefile                     # Single-command workflow targets
 ├── package.json                 # Node.js project manifest & Vitest configuration
 ├── README.md                    # Comprehensive technical documentation
+├── runbook.md                   # Production operational runbook
+├── SECURITY.md                  # Vulnerability disclosure policy
 └── vercel.json                  # Edge region pinning, CSP, HSTS, security headers
 ```
 
 ---
 
 ## Getting Started
+
+### Single-Command Workflow (Makefile)
+
+```bash
+git clone https://github.com/subki72/gold-arbitrage-analyzer.git
+cd gold-arbitrage-analyzer
+
+# 1. Install locked dependencies
+make install
+
+# 2. Run linter & syntax checks
+make lint
+
+# 3. Run automated Vitest suite (67 tests)
+make test
+
+# 4. Run local static server
+make run
+
+# 5. Build hardened non-root Docker image
+make docker-build
+```
 
 ### Prerequisites
 - **Node.js**: >= 18.0.0
@@ -239,6 +278,17 @@ npx vercel --prod
 4. Commit your changes (`git commit -m "feat: add amazing feature"`).
 5. Push to the branch (`git push origin feature/amazing-feature`).
 6. Open a Pull Request.
+
+---
+
+## Security & Governance
+
+- **Vulnerability Disclosure**: Review our security reporting guidelines in [SECURITY.md](SECURITY.md).
+- **Operational Runbook**: Production health diagnostics and incident procedures in [runbook.md](runbook.md).
+- **Architecture Specification**: System topology and data integrity guarantees in [doc/ARCHITECTURE.md](doc/ARCHITECTURE.md).
+- **Contribution Guidelines**: Development setup and pull request etiquette in [CONTRIBUTING.md](CONTRIBUTING.md).
+- **Release Changelog**: Track semantic releases and version updates in [CHANGELOG.md](CHANGELOG.md).
+- **License**: Explicit open source licensing under the [MIT License](LICENSE).
 
 ---
 
