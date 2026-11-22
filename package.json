@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "vercel dev",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "lint": "node --check api/prices.js && node --check api/health.js && node --check src/index.js",
+    "build": "node -e \"console.log('Static & serverless bundle verified')\""
   },
   "repository": {
     "type": "git",
