@@ -26,6 +26,6 @@
   "author": "Gold Arbitrage Analyzer",
   "license": "MIT",
   "devDependencies": {
-    "vitest": "^3.0.0"
+    "vitest": "^5.1.1"
   }
 }
