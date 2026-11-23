@@ -1,8 +1,16 @@
 Prompt/
 qa-report/
 tests/
+doc/
+Docs/
 .agents/
 .github/
+Dockerfile
+.dockerignore
+Makefile
+.eslintrc.json
+.pre-commit-config.yaml
+LICENSE
 *.md
 !README.md
 vitest.config.*

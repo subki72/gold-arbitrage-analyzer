@@ -10,7 +10,7 @@ lint:
 	npm run lint
 
 build:
-	npm run build
+	npm run verify:bundle
 
 run:
 	npx serve -l 3000 .

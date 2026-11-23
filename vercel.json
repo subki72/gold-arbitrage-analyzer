@@ -1,6 +1,9 @@
 {
   "version": 2,
   "name": "gold-arbitrage-analyzer",
+  "framework": null,
+  "buildCommand": null,
+  "outputDirectory": ".",
   "regions": ["sin1"],
   "headers": [
     {
